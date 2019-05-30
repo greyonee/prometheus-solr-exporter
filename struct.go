@@ -26,55 +26,60 @@ type ResponseHeader struct {
 type Core struct {
 	Class string `json:"class"`
 	Stats struct {
-		DeletedDocs int `json:"deletedDocs"`
-		MaxDoc      int `json:"maxDoc"`
-		NumDocs     int `json:"numDocs"`
+		DeletedDocs int `json:"SEARCHER.searcher.deletedDocs"`
+		MaxDoc      int `json:"SEARCHER.searcher.maxDoc"`
+		NumDocs     int `json:"SEARCHER.searcher.numDocs"`
 	} `json:"stats"`
 }
 
 type QueryHandler struct {
-	Class string `json:"class"`
-	Stats struct {
-		One5minRateReqsPerSecond     *float64 `json:"15minRateReqsPerSecond,omitempty"`
-		FiveMinRateReqsPerSecond     *float64 `json:"5MinRateReqsPerSecond,omitempty"`
-		One5minRateRequestsPerSecond float64  `json:"15minRateRequestsPerSecond,omitempty"`
-		FiveminRateRequestsPerSecond float64  `json:"5minRateRequestsPerSecond,omitempty"`
-		Seven5thPcRequestTime        float64  `json:"75thPcRequestTime"`
-		Nine5thPcRequestTime         float64  `json:"95thPcRequestTime"`
-		Nine9thPcRequestTime         float64  `json:"99thPcRequestTime"`
-		Nine99thPcRequestTime        float64  `json:"999thPcRequestTime"`
-		AvgRequestsPerSecond         float64  `json:"avgRequestsPerSecond"`
-		AvgTimePerRequest            float64  `json:"avgTimePerRequest"`
-		Errors                       int      `json:"errors"`
-		HandlerStart                 int      `json:"handlerStart"`
-		MedianRequestTime            float64  `json:"medianRequestTime"`
-		Requests                     int      `json:"requests"`
-		Timeouts                     int      `json:"timeouts"`
-		TotalTime                    float64  `json:"totalTime"`
-	} `json:"stats"`
+	Class string          `json:"class"`
+	Stats json.RawMessage `json:"stats"`
+}
+
+type QueryHandlerStats struct {
+	One5minRateRequestsPerSecond float64 `json:"requestTimes.15minRate,omitempty"`
+	FiveminRateRequestsPerSecond float64 `json:"requestTimes.5minRate,omitempty"`
+	Seven5thPcRequestTime        float64 `json:"requestTimes.p75_ms"`
+	Nine5thPcRequestTime         float64 `json:"requestTimes.p95_ms"`
+	Nine9thPcRequestTime         float64 `json:"requestTimes.p99_ms"`
+	Nine99thPcRequestTime        float64 `json:"requestTimes.p999_ms"`
+	AvgRequestsPerSecond         float64 `json:"requestTimes.avgRequestsPerSecond"`
+	AvgTimePerRequest            float64 `json:"requestTimes.avgTimePerRequest"`
+	MedianRequestTime            float64 `json:"requestTimes.meanRate"`
+	Requests                     float64 `json:"requests"`
+	Timeouts                     int     `json:"timeouts.count"`
+	Errors                       int     `json:"errors.count"`
+	ServerErrors                 int     `json:"serverErrors.count"`
+	ClientErrors                 int     `json:"clientErrors.count"`
+	HandlerStart                 int     `json:"handlerStart"`
+	TotalTime                    float64 `json:"totalTime"`
 }
 
 type UpdateHandler struct {
-	Class string `json:"class"`
-	Stats struct {
-		Adds                     int    `json:"adds"`
-		AutocommitMaxDocs        int    `json:"autocommit maxDocs"`
-		AutocommitMaxTime        string `json:"autocommit maxTime"`
-		Autocommits              int    `json:"autocommits"`
-		Commits                  int    `json:"commits"`
-		CumulativeAdds           int    `json:"cumulative_adds"`
-		CumulativeDeletesByID    int    `json:"cumulative_deletesById"`
-		CumulativeDeletesByQuery int    `json:"cumulative_deletesByQuery"`
-		CumulativeErrors         int    `json:"cumulative_errors"`
-		DeletesByID              int    `json:"deletesById"`
-		DeletesByQuery           int    `json:"deletesByQuery"`
-		DocsPending              int    `json:"docsPending"`
-		Errors                   int    `json:"errors"`
-		ExpungeDeletes           int    `json:"expungeDeletes"`
-		Optimizes                int    `json:"optimizes"`
-		Rollbacks                int    `json:"rollbacks"`
-		SoftAutocommits          int    `json:"soft autocommits"`
-	} `json:"stats"`
+	Class string          `json:"class"`
+	Stats json.RawMessage `json:"stats"`
+}
+
+type UpdateHandlerStats struct {
+	Adds                     int `json:"adds"`
+	AutocommitMaxDocs        int `json:"autoCommitMaxDocs"`
+	Autocommits              int `json:"autocommits"`
+	Commits                  int `json:"commits.count"`
+	CumulativeAdds           int `json:"cumulativeAdds.count"`
+	CumulativeDeletesByID    int `json:"cumulativeDeletesById.count"`
+	CumulativeDeletesByQuery int `json:"cumulativeDeletesByQuery.count"`
+	CumulativeErrors         int `json:"cumulativeErrors.count"`
+	DeletesByID              int `json:"deletesById"`
+	DeletesByQuery           int `json:"deletesByQuery"`
+	DocsPending              int `json:"docsPending"`
+	Errors                   int `json:"errors"`
+	ExpungeDeletes           int `json:"expungeDeletes.count"`
+	Merges                   int `json:"merges.count"`
+	Optimizes                int `json:"optimizes.cont"`
+	Rollbacks                int `json:"rollbacks.count"`
+	SoftAutocommits          int `json:"softAutoCommits"`
+	Splits                   int `json:"splits.count"`
 }
 
 type Cache struct {

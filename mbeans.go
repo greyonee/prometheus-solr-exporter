@@ -59,29 +59,27 @@ func processMbeans(e *Exporter, coreName string, data io.Reader) []error {
 			continue
 		}
 
-		var FiveminRateRequestsPerSecond, One5minRateRequestsPerSecond float64
-		if metrics.Stats.One5minRateReqsPerSecond == nil && metrics.Stats.FiveMinRateReqsPerSecond == nil {
-			FiveminRateRequestsPerSecond = float64(metrics.Stats.FiveminRateRequestsPerSecond)
-			One5minRateRequestsPerSecond = float64(metrics.Stats.One5minRateRequestsPerSecond)
-		} else {
-			FiveminRateRequestsPerSecond = float64(*metrics.Stats.FiveMinRateReqsPerSecond)
-			One5minRateRequestsPerSecond = float64(*metrics.Stats.One5minRateReqsPerSecond)
+		prefix := []byte("QUERY." + name + ".")
+		var stats QueryHandlerStats
+		if err := json.Unmarshal(bytes.Replace(metrics.Stats, prefix, []byte(""), -1), &stats); err != nil {
+			errors = append(errors, fmt.Errorf("Failed to unmarshal mbeans query metrics JSON into struct: %v, json : %s", err, b))
+			return errors
 		}
 
-		e.gaugeQuery["15min_rate_reqs_per_second"].WithLabelValues(coreName, name, metrics.Class).Set(One5minRateRequestsPerSecond)
-		e.gaugeQuery["5min_rate_reqs_per_second"].WithLabelValues(coreName, name, metrics.Class).Set(FiveminRateRequestsPerSecond)
-		e.gaugeQuery["75th_pc_request_time"].WithLabelValues(coreName, name, metrics.Class).Set(float64(metrics.Stats.Seven5thPcRequestTime))
-		e.gaugeQuery["95th_pc_request_time"].WithLabelValues(coreName, name, metrics.Class).Set(float64(metrics.Stats.Nine5thPcRequestTime))
-		e.gaugeQuery["99th_pc_request_time"].WithLabelValues(coreName, name, metrics.Class).Set(float64(metrics.Stats.Nine9thPcRequestTime))
-		e.gaugeQuery["999th_pc_request_time"].WithLabelValues(coreName, name, metrics.Class).Set(float64(metrics.Stats.Nine99thPcRequestTime))
-		e.gaugeQuery["avg_requests_per_second"].WithLabelValues(coreName, name, metrics.Class).Set(float64(metrics.Stats.AvgRequestsPerSecond))
-		e.gaugeQuery["avg_time_per_request"].WithLabelValues(coreName, name, metrics.Class).Set(float64(metrics.Stats.AvgTimePerRequest))
-		e.gaugeQuery["errors"].WithLabelValues(coreName, name, metrics.Class).Set(float64(metrics.Stats.Errors))
-		e.gaugeQuery["handler_start"].WithLabelValues(coreName, name, metrics.Class).Set(float64(metrics.Stats.HandlerStart))
-		e.gaugeQuery["median_request_time"].WithLabelValues(coreName, name, metrics.Class).Set(float64(metrics.Stats.MedianRequestTime))
-		e.gaugeQuery["requests"].WithLabelValues(coreName, name, metrics.Class).Set(float64(metrics.Stats.Requests))
-		e.gaugeQuery["timeouts"].WithLabelValues(coreName, name, metrics.Class).Set(float64(metrics.Stats.Timeouts))
-		e.gaugeQuery["total_time"].WithLabelValues(coreName, name, metrics.Class).Set(float64(metrics.Stats.TotalTime))
+		e.gaugeQuery["75th_pc_request_time"].WithLabelValues(coreName, name, metrics.Class).Set(float64(stats.Seven5thPcRequestTime))
+		e.gaugeQuery["95th_pc_request_time"].WithLabelValues(coreName, name, metrics.Class).Set(float64(stats.Nine5thPcRequestTime))
+		e.gaugeQuery["99th_pc_request_time"].WithLabelValues(coreName, name, metrics.Class).Set(float64(stats.Nine9thPcRequestTime))
+		e.gaugeQuery["999th_pc_request_time"].WithLabelValues(coreName, name, metrics.Class).Set(float64(stats.Nine99thPcRequestTime))
+		e.gaugeQuery["avg_requests_per_second"].WithLabelValues(coreName, name, metrics.Class).Set(float64(stats.AvgRequestsPerSecond))
+		e.gaugeQuery["avg_time_per_request"].WithLabelValues(coreName, name, metrics.Class).Set(float64(stats.AvgTimePerRequest))
+		e.gaugeQuery["errors"].WithLabelValues(coreName, name, metrics.Class).Set(float64(stats.Errors))
+		e.gaugeQuery["client_errors"].WithLabelValues(coreName, name, metrics.Class).Set(float64(stats.ClientErrors))
+		e.gaugeQuery["server_errors"].WithLabelValues(coreName, name, metrics.Class).Set(float64(stats.ServerErrors))
+		e.gaugeQuery["handler_start"].WithLabelValues(coreName, name, metrics.Class).Set(float64(stats.HandlerStart))
+		e.gaugeQuery["median_request_time"].WithLabelValues(coreName, name, metrics.Class).Set(float64(stats.MedianRequestTime))
+		e.gaugeQuery["requests"].WithLabelValues(coreName, name, metrics.Class).Set(float64(stats.Requests))
+		e.gaugeQuery["timeouts"].WithLabelValues(coreName, name, metrics.Class).Set(float64(stats.Timeouts))
+		e.gaugeQuery["total_time"].WithLabelValues(coreName, name, metrics.Class).Set(float64(stats.TotalTime))
 	}
 
 	var updateMetrics map[string]UpdateHandler
@@ -94,27 +92,32 @@ func processMbeans(e *Exporter, coreName string, data io.Reader) []error {
 		if strings.Contains(name, "@") || strings.HasPrefix(name, "/") {
 			continue
 		}
-		var autoCommitMaxTime int
-		if len(metrics.Stats.AutocommitMaxTime) > 2 {
-			autoCommitMaxTime, _ = strconv.Atoi(metrics.Stats.AutocommitMaxTime[:len(metrics.Stats.AutocommitMaxTime)-2])
+
+		prefix := []byte("UPDATE." + name + ".")
+		var stats UpdateHandlerStats
+		if err := json.Unmarshal(bytes.Replace(metrics.Stats, prefix, []byte(""), -1), &stats); err != nil {
+			errors = append(errors, fmt.Errorf("Failed to unmarshal mbeans query metrics JSON into struct: %v, json : %s", err, b))
+			return errors
 		}
-		e.gaugeUpdate["adds"].WithLabelValues(coreName, name, metrics.Class).Set(float64(metrics.Stats.Adds))
-		e.gaugeUpdate["autocommit_max_docs"].WithLabelValues(coreName, name, metrics.Class).Set(float64(metrics.Stats.AutocommitMaxDocs))
-		e.gaugeUpdate["autocommit_max_time"].WithLabelValues(coreName, name, metrics.Class).Set(float64(autoCommitMaxTime))
-		e.gaugeUpdate["autocommits"].WithLabelValues(coreName, name, metrics.Class).Set(float64(metrics.Stats.Autocommits))
-		e.gaugeUpdate["commits"].WithLabelValues(coreName, name, metrics.Class).Set(float64(metrics.Stats.Commits))
-		e.gaugeUpdate["cumulative_adds"].WithLabelValues(coreName, name, metrics.Class).Set(float64(metrics.Stats.CumulativeAdds))
-		e.gaugeUpdate["cumulative_deletes_by_id"].WithLabelValues(coreName, name, metrics.Class).Set(float64(metrics.Stats.CumulativeDeletesByID))
-		e.gaugeUpdate["cumulative_deletes_by_query"].WithLabelValues(coreName, name, metrics.Class).Set(float64(metrics.Stats.CumulativeDeletesByQuery))
-		e.gaugeUpdate["cumulative_errors"].WithLabelValues(coreName, name, metrics.Class).Set(float64(metrics.Stats.CumulativeErrors))
-		e.gaugeUpdate["deletes_by_id"].WithLabelValues(coreName, name, metrics.Class).Set(float64(metrics.Stats.DeletesByID))
-		e.gaugeUpdate["deletes_by_query"].WithLabelValues(coreName, name, metrics.Class).Set(float64(metrics.Stats.DeletesByQuery))
-		e.gaugeUpdate["docs_pending"].WithLabelValues(coreName, name, metrics.Class).Set(float64(metrics.Stats.DocsPending))
-		e.gaugeUpdate["errors"].WithLabelValues(coreName, name, metrics.Class).Set(float64(metrics.Stats.Errors))
-		e.gaugeUpdate["expunge_deletes"].WithLabelValues(coreName, name, metrics.Class).Set(float64(metrics.Stats.ExpungeDeletes))
-		e.gaugeUpdate["optimizes"].WithLabelValues(coreName, name, metrics.Class).Set(float64(metrics.Stats.Optimizes))
-		e.gaugeUpdate["rollbacks"].WithLabelValues(coreName, name, metrics.Class).Set(float64(metrics.Stats.Rollbacks))
-		e.gaugeUpdate["soft_autocommits"].WithLabelValues(coreName, name, metrics.Class).Set(float64(metrics.Stats.SoftAutocommits))
+
+		e.gaugeUpdate["adds"].WithLabelValues(coreName, name, metrics.Class).Set(float64(stats.Adds))
+		e.gaugeUpdate["autocommit_max_docs"].WithLabelValues(coreName, name, metrics.Class).Set(float64(stats.AutocommitMaxDocs))
+		e.gaugeUpdate["autocommits"].WithLabelValues(coreName, name, metrics.Class).Set(float64(stats.Autocommits))
+		e.gaugeUpdate["commits"].WithLabelValues(coreName, name, metrics.Class).Set(float64(stats.Commits))
+		e.gaugeUpdate["cumulative_adds"].WithLabelValues(coreName, name, metrics.Class).Set(float64(stats.CumulativeAdds))
+		e.gaugeUpdate["cumulative_deletes_by_id"].WithLabelValues(coreName, name, metrics.Class).Set(float64(stats.CumulativeDeletesByID))
+		e.gaugeUpdate["cumulative_deletes_by_query"].WithLabelValues(coreName, name, metrics.Class).Set(float64(stats.CumulativeDeletesByQuery))
+		e.gaugeUpdate["cumulative_errors"].WithLabelValues(coreName, name, metrics.Class).Set(float64(stats.CumulativeErrors))
+		e.gaugeUpdate["deletes_by_id"].WithLabelValues(coreName, name, metrics.Class).Set(float64(stats.DeletesByID))
+		e.gaugeUpdate["deletes_by_query"].WithLabelValues(coreName, name, metrics.Class).Set(float64(stats.DeletesByQuery))
+		e.gaugeUpdate["docs_pending"].WithLabelValues(coreName, name, metrics.Class).Set(float64(stats.DocsPending))
+		e.gaugeUpdate["errors"].WithLabelValues(coreName, name, metrics.Class).Set(float64(stats.Errors))
+		e.gaugeUpdate["expunge_deletes"].WithLabelValues(coreName, name, metrics.Class).Set(float64(stats.ExpungeDeletes))
+		e.gaugeUpdate["merges"].WithLabelValues(coreName, name, metrics.Class).Set(float64(stats.Merges))
+		e.gaugeUpdate["optimizes"].WithLabelValues(coreName, name, metrics.Class).Set(float64(stats.Optimizes))
+		e.gaugeUpdate["rollbacks"].WithLabelValues(coreName, name, metrics.Class).Set(float64(stats.Rollbacks))
+		e.gaugeUpdate["soft_autocommits"].WithLabelValues(coreName, name, metrics.Class).Set(float64(stats.SoftAutocommits))
+		e.gaugeUpdate["splits"].WithLabelValues(coreName, name, metrics.Class).Set(float64(stats.Splits))
 	}
 
 	cacheData := findMBeansData(mBeansData.SolrMbeans, "CACHE")

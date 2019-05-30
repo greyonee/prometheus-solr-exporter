@@ -40,6 +40,8 @@ var (
 		"avg_requests_per_second":    "avg_requests_per_second",
 		"avg_time_per_request":       "avg_time_per_request",
 		"errors":                     "errors",
+		"client_errors":              "client_errors",
+		"server_errors":              "server_errors",
 		"handler_start":              "handler_start",
 		"median_request_time":        "median_request_time",
 		"requests":                   "requests",
@@ -49,7 +51,6 @@ var (
 	gaugeUpdateMetrics = map[string]string{
 		"adds":                        "adds",
 		"autocommit_max_docs":         "autocommit_max_docs",
-		"autocommit_max_time":         "autocommit_max_time",
 		"autocommits":                 "autocommits",
 		"commits":                     "commits",
 		"cumulative_adds":             "cumulative_adds",
@@ -61,9 +62,11 @@ var (
 		"docs_pending":                "docs_pending",
 		"errors":                      "errors",
 		"expunge_deletes":             "expunge_deletes",
+		"merges":                      "merges",
 		"optimizes":                   "optimizes",
 		"rollbacks":                   "rollbacks",
 		"soft_autocommits":            "soft_autocommits",
+		"splits":                      "splits",
 	}
 	gaugeCacheMetrics = map[string]string{
 		"cumulative_evictions": "cumulative_evictions",
