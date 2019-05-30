@@ -1,5 +1,5 @@
 repository:
-    path: github.com/noony/prometheus-solr-exporter
+    path: github.com/greyonee/prometheus-solr-exporter
 build:
     binaries:
         - name: solr_exporter

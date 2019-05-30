@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/common/config"
 	"github.com/prometheus/common/log"
 	"github.com/prometheus/common/version"
 	"gopkg.in/alecthomas/kingpin.v2"
@@ -36,6 +37,8 @@ var (
 	solrExcludedCore = kingpin.Flag("solr.excluded-core", "Regex to exclude core from monitoring").Default("").String()
 	solrTimeout      = kingpin.Flag("solr.timeout", "Timeout for trying to get stats from Solr.").Default("5s").Duration()
 	solrPidFile      = kingpin.Flag("solr.pid-file", "").Default(pidFileHelpText).String()
+	solrUsername     = kingpin.Flag("solr.username", "Solr basic auth username (optional).").Default("").String()
+	solrPassword     = kingpin.Flag("solr.password", "Solr basic auth password (optional).").Default("").String()
 )
 
 func main() {
@@ -47,19 +50,25 @@ func main() {
 	log.Infoln("Starting solr_exporter", version.Info())
 	log.Infoln("Build context", version.BuildContext())
 
-	client := &http.Client{
-		Transport: &http.Transport{
-			Dial: func(netw, addr string) (net.Conn, error) {
-				c, err := net.DialTimeout(netw, addr, *solrTimeout)
-				if err != nil {
-					return nil, err
-				}
-				if err := c.SetDeadline(time.Now().Add(*solrTimeout)); err != nil {
-					return nil, err
-				}
-				return c, nil
-			},
+	// TODO implement creating http client from prometheus config .yml file
+	var transport http.RoundTripper = &http.Transport{
+		Dial: func(netw, addr string) (net.Conn, error) {
+			c, err := net.DialTimeout(netw, addr, *solrTimeout)
+			if err != nil {
+				return nil, err
+			}
+			if err := c.SetDeadline(time.Now().Add(*solrTimeout)); err != nil {
+				return nil, err
+			}
+			return c, nil
 		},
+	}
+	if *solrUsername != "" && *solrPassword != "" {
+		transport = config.NewBasicAuthRoundTripper(*solrUsername, config.Secret(*solrPassword), "", transport)
+	}
+
+	client := &http.Client{
+		Transport: transport,
 	}
 
 	solrBaseURL := fmt.Sprintf("%s%s", *solrURI, *solrContextPath)
