@@ -36,7 +36,6 @@ type QueryHandler struct {
 	Class string          `json:"class"`
 	Stats json.RawMessage `json:"stats"`
 }
-
 type QueryHandlerStats struct {
 	One5minRateRequestsPerSecond float64 `json:"requestTimes.15minRate,omitempty"`
 	FiveminRateRequestsPerSecond float64 `json:"requestTimes.5minRate,omitempty"`
@@ -60,7 +59,6 @@ type UpdateHandler struct {
 	Class string          `json:"class"`
 	Stats json.RawMessage `json:"stats"`
 }
-
 type UpdateHandlerStats struct {
 	Adds                     int `json:"adds"`
 	AutocommitMaxDocs        int `json:"autoCommitMaxDocs"`
@@ -83,21 +81,22 @@ type UpdateHandlerStats struct {
 }
 
 type Cache struct {
-	Class string `json:"class"`
-	Stats struct {
-		CumulativeEvictions int         `json:"cumulative_evictions"`
-		CumulativeHitratio  json.Number `json:"cumulative_hitratio,Number"`
-		CumulativeHits      int         `json:"cumulative_hits"`
-		CumulativeInserts   int         `json:"cumulative_inserts"`
-		CumulativeLookups   int         `json:"cumulative_lookups"`
-		Evictions           int         `json:"evictions"`
-		Hitratio            json.Number `json:"hitratio,Number"`
-		Hits                int         `json:"hits"`
-		Inserts             int         `json:"inserts"`
-		Lookups             int         `json:"lookups"`
-		Size                int         `json:"size"`
-		WarmupTime          int         `json:"warmupTime"`
-	} `json:"stats"`
+	Class string          `json:"class"`
+	Stats json.RawMessage `json:"stats"`
+}
+type CacheStats struct {
+	CumulativeEvictions int         `json:"cumulative_evictions"`
+	CumulativeHitratio  json.Number `json:"cumulative_hitratio,Number"`
+	CumulativeHits      int         `json:"cumulative_hits"`
+	CumulativeInserts   int         `json:"cumulative_inserts"`
+	CumulativeLookups   int         `json:"cumulative_lookups"`
+	Evictions           int         `json:"evictions"`
+	Hitratio            json.Number `json:"hitratio,Number"`
+	Hits                int         `json:"hits"`
+	Inserts             int         `json:"inserts"`
+	Lookups             int         `json:"lookups"`
+	Size                int         `json:"size"`
+	WarmupTime          int         `json:"warmupTime"`
 }
 
 type JVMStatus struct {
